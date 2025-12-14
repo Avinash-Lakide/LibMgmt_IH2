@@ -1,0 +1,117 @@
+@LibraryManagementSystem_HostAddress = http://localhost:5264
+
+# Get all books (with paging and filtering)
+GET {{LibraryManagementSystem_HostAddress}}/api/books?page=1&size=10&title=Sample&author=John
+Accept: application/json
+
+###
+
+# Get book details
+GET {{LibraryManagementSystem_HostAddress}}/api/books/00000000-0000-0000-0000-000000000001
+Accept: application/json
+
+###
+
+# Create a book
+POST {{LibraryManagementSystem_HostAddress}}/api/books
+Content-Type: application/json
+
+{
+  "bookIsbn": "1234567890",
+  "bookTitle": "Sample Book",
+  "authorName": "John Doe",
+  "totalCopies": 5,
+  "availableCopies": 5
+}
+
+###
+
+# Update a book
+PUT {{LibraryManagementSystem_HostAddress}}/api/books/00000000-0000-0000-0000-000000000001
+Content-Type: application/json
+
+{
+  "bookId": "00000000-0000-0000-0000-000000000001",
+  "bookIsbn": "1234567890",
+  "bookTitle": "Updated Book",
+  "authorName": "John Doe",
+  "totalCopies": 5,
+  "availableCopies": 5,
+  "addedOn": "2023-01-01T00:00:00Z",
+  "versionStamp": [],
+  "isDeleted": false
+}
+
+###
+
+# Soft delete a book
+DELETE {{LibraryManagementSystem_HostAddress}}/api/books/00000000-0000-0000-0000-000000000001
+
+###
+
+# Get all members (with paging)
+GET {{LibraryManagementSystem_HostAddress}}/api/members?page=1&size=10
+Accept: application/json
+
+###
+
+# Get member profile + current loans
+GET {{LibraryManagementSystem_HostAddress}}/api/members/00000000-0000-0000-0000-000000000002
+Accept: application/json
+
+###
+
+# Register member
+POST {{LibraryManagementSystem_HostAddress}}/api/members
+Content-Type: application/json
+
+{
+  "fullName": "Jane Smith",
+  "emailId": "jane@example.com"
+}
+
+###
+
+# Update member
+PUT {{LibraryManagementSystem_HostAddress}}/api/members/00000000-0000-0000-0000-000000000002
+Content-Type: application/json
+
+{
+  "memberId": "00000000-0000-0000-0000-000000000002",
+  "fullName": "Jane Doe",
+  "emailId": "jane@example.com",
+  "joinedDate": "2023-01-01T00:00:00Z"
+}
+
+###
+
+# Borrow a book
+POST {{LibraryManagementSystem_HostAddress}}/api/loans/borrow
+Content-Type: application/json
+
+{
+  "bookId": "00000000-0000-0000-0000-000000000001",
+  "memberId": "00000000-0000-0000-0000-000000000002"
+}
+
+###
+
+# Return a book
+POST {{LibraryManagementSystem_HostAddress}}/api/loans/return
+Content-Type: application/json
+
+{
+  "loanId": "00000000-0000-0000-0000-000000000003"
+}
+
+###
+
+# Query loans (active/history/overdue with paging)
+GET {{LibraryManagementSystem_HostAddress}}/api/loans?status=active&page=1&size=10
+Accept: application/json
+
+###
+
+# List overdue loans
+GET {{LibraryManagementSystem_HostAddress}}/api/loans/overdue
+Accept: application/json

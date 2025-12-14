@@ -1,0 +1,19 @@
+# Build results
+bin/
+obj/
+
+# Logs
+*.log
+logs/
+
+# Copilot instructions
+.github/copilot-instructions.md
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio cache
+.vs/
