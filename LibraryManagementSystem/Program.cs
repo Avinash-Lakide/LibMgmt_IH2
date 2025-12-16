@@ -3,8 +3,17 @@ using LibraryManagementSystem.Data;
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Repositories;
 using LibraryManagementSystem.Services;
+using LibraryManagementSystem.Middleware;
+using LibraryManagementSystem.Components;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -26,6 +35,13 @@ builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
 
+// Register components
+builder.Services.AddScoped<ValidationService>();
+builder.Services.AddScoped<CachingService>();
+
+// Add caching
+builder.Services.AddMemoryCache();
+
 var app = builder.Build();
 
 // Ensure database is created
@@ -44,6 +60,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Add custom middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<LoggingMiddleware>();
 
 app.MapControllers();
 

@@ -11,12 +11,12 @@ namespace LibraryManagementSystem.Repositories
 
         public async Task<IEnumerable<Book>> GetBooksByAuthorAsync(string author)
         {
-            return await _dbSet.Where(b => b.AuthorName.Contains(author)).ToListAsync();
+            return await _dbSet.Where(b => b.AuthorName.Contains(author)).AsNoTracking().ToListAsync();
         }
 
         public async Task<IEnumerable<Book>> GetAvailableBooksAsync()
         {
-            return await _dbSet.Where(b => b.AvailableCopies > 0).ToListAsync();
+            return await _dbSet.Where(b => b.AvailableCopies > 0).AsNoTracking().ToListAsync();
         }
 
         public async Task<(IEnumerable<Book> books, int total)> GetBooksAsync(string? title, string? author, int page, int size)
@@ -28,7 +28,7 @@ namespace LibraryManagementSystem.Repositories
                 query = query.Where(b => b.AuthorName.Contains(author));
 
             var total = await query.CountAsync();
-            var books = await query.Skip((page - 1) * size).Take(size).ToListAsync();
+            var books = await query.Skip((page - 1) * size).Take(size).AsNoTracking().ToListAsync();
             return (books, total);
         }
     }

@@ -54,6 +54,30 @@ To run: `dotnet run`
 
 Follow this step-by-step to test all APIs. Use tools like Postman or curl. Replace `{id}` placeholders with actual Guids from responses. the API runs on `http://localhost:5264`.
 
+## Here's a summary of the recent enhancements on 16th Dec:
+
+**Middleware Added**
+- LoggingMiddleware: Logs incoming requests (method, path, IP) and outgoing responses (status code, processing time).
+- ExceptionHandlingMiddleware: Catches unhandled exceptions, logs them, and returns a standardized error response.
+
+Note: Both middlewares are registered in Program.cs and will handle requests globally.
+
+**Reusable Components**
+- ValidationService: Provides model validation using DataAnnotations. Integrated into BookService for create/update operations.
+- CachingService: Implements in-memory caching with expiration. Used in BookService to cache available books for 5 minutes, reducing database queries.
+
+**Performance Optimizations**
+- EF Core Improvements: Added AsNoTracking() to read-only queries in repositories to avoid unnecessary change tracking.
+- Transactions: Wrapped BorrowBookAsync and ReturnBookAsync in database transactions for data consistency and to reduce round-trips.
+- Caching: Cached frequently accessed data (available books) to improve response times.
+- Validation: Added input validation to prevent invalid data from being processed.
+
+**Code Quality Improvements**
+- Used dependency injection for all new components.
+- Maintained async/await patterns throughout.
+- Added proper error handling with transactions.
+
+
 ### 1. Create Sample Data
 
 **Add a Book**

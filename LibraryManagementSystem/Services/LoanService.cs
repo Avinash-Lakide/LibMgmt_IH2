@@ -1,5 +1,6 @@
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Models;
+using LibraryManagementSystem.Data;
 
 namespace LibraryManagementSystem.Services
 {
@@ -7,11 +8,13 @@ namespace LibraryManagementSystem.Services
     {
         private readonly ILoanRepository _loanRepository;
         private readonly IBookService _bookService;
+        private readonly LibraryDbContext _context;
 
-        public LoanService(ILoanRepository loanRepository, IBookService bookService) : base(loanRepository)
+        public LoanService(ILoanRepository loanRepository, IBookService bookService, LibraryDbContext context) : base(loanRepository)
         {
             _loanRepository = loanRepository;
             _bookService = bookService;
+            _context = context;
         }
 
         public async Task<IEnumerable<Loan>> GetLoansByMemberAsync(Guid memberId)
@@ -31,44 +34,65 @@ namespace LibraryManagementSystem.Services
                 throw new InvalidOperationException("Cannot borrow this book.");
             }
 
-            var loan = new Loan
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                BookId = (Guid)bookId,
-                MemberId = memberId,
-                BorrowedDate = DateTime.Now,
-                DueDate = DateTime.Now.AddDays(14) // Assuming 2 weeks loan period
-            };
+                var loan = new Loan
+                {
+                    BookId = (Guid)bookId,
+                    MemberId = memberId,
+                    BorrowedDate = DateTime.Now,
+                    DueDate = DateTime.Now.AddDays(14) // Assuming 2 weeks loan period
+                };
 
-            // Decrease available copies
-            var book = await _bookService.GetByIdAsync(bookId);
-            if (book != null)
-            {
-                book.AvailableCopies--;
-                await _bookService.UpdateAsync(book);
+                // Decrease available copies
+                var book = await _bookService.GetByIdAsync(bookId);
+                if (book != null)
+                {
+                    book.AvailableCopies--;
+                    await _bookService.UpdateAsync(book);
+                }
+
+                var createdLoan = await CreateAsync(loan);
+                await transaction.CommitAsync();
+                return createdLoan;
             }
-
-            return await CreateAsync(loan);
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task ReturnBookAsync(Guid loanId)
         {
-            var loan = await GetByIdAsync(loanId);
-            if (loan == null || loan.ReturnedDate.HasValue)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                throw new InvalidOperationException("Loan not found or already returned.");
+                var loan = await GetByIdAsync(loanId);
+                if (loan == null || loan.ReturnedDate.HasValue)
+                {
+                    throw new InvalidOperationException("Loan not found or already returned.");
+                }
+
+                loan.ReturnedDate = DateTime.Now;
+
+                // Increase available copies
+                var book = await _bookService.GetByIdAsync(loan.BookId);
+                if (book != null)
+                {
+                    book.AvailableCopies++;
+                    await _bookService.UpdateAsync(book);
+                }
+
+                await UpdateAsync(loan);
+                await transaction.CommitAsync();
             }
-
-            loan.ReturnedDate = DateTime.Now;
-
-            // Increase available copies
-            var book = await _bookService.GetByIdAsync(loan.BookId);
-            if (book != null)
+            catch
             {
-                book.AvailableCopies++;
-                await _bookService.UpdateAsync(book);
+                await transaction.RollbackAsync();
+                throw;
             }
-
-            await UpdateAsync(loan);
         }
 
         public async Task<bool> CanBorrowAsync(object bookId, Guid memberId)
